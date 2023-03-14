@@ -30,19 +30,21 @@ int main(int argc, char **argv) {
     print_usage(argv[0]);
     return -1;
   }
-  printf("Opening files...\n");
 
   char buf[2];
   ssize_t nr = 1;
   
   // to do.....
-  int wr;
-  nr = read(fd_src, buf, 1);
-  while(!nr == 0) {
-        wr = write(fd_dst, buf, 1);
-        nr = read(fd_src, buf, 1);
+  while(1) {
+        ssize_t readBytes = read(fd_src, buf, sizeof(buf));
+        if (readBytes == 0){
+            break;
+        }
+        size_t writeBytes = 0;
+        while (writeBytes < readBytes){
+            writeBytes += write(fd_dst, buf + writeBytes, readBytes - writeBytes);
+        }
   }
-  
    
   if(nr == -1) {
     perror("read SOURCE");
@@ -53,7 +55,6 @@ int main(int argc, char **argv) {
   if(close(fd_dst) == -1) {
     perror("close DEST");
   }
-  printf("Closing files...\n");
   return 0;
 }
 
