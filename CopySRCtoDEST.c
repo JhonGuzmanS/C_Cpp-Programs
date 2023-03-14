@@ -37,9 +37,7 @@ int main(int argc, char **argv) {
   // to do.....
   while(1) {
         ssize_t readBytes = read(fd_src, buf, sizeof(buf));
-        if (readBytes == 0){
-            break;
-        }
+        if (readBytes == 0) break;
         size_t writeBytes = 0;
         while (writeBytes < readBytes){
             writeBytes += write(fd_dst, buf + writeBytes, readBytes - writeBytes);
