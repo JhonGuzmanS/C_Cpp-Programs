@@ -6,7 +6,7 @@ struct Process
 	int jid;
 	int size;
 	string status = "wait";
-	int pid = 0;
+	int pid = -1;
 
 };
 
@@ -18,38 +18,46 @@ struct Partition
 	int jid = 0;
 };
 
-void inputInfo(Partition *partition[], Process *jobs[], int &part_size, int &proc_size);
-
 int bestFit(Partition partition[], Process jobs[], int part_size, int proc_size);
 
 int firstFit(Partition partition[], Process jobs[], int part_size, int proc_size);
 
 int nextFit(Partition partition[], Process jobs[], int part_size, int proc_size);
 
+int worstFit(Partition partition[], Process jobs[], int part_size, int proc_size);
+
 void  printAlg(string alg, Partition partition[], Process jobs[], int proc_size) {
-	cout << "____________________ " << alg << " ____________________" << endl;
+	int num = 0;
+	int diff = 0;
+	cout << "______________________________ " << alg << " ______________________________" << endl;
 	cout << "Job ID \t\t Partition ID \t\t Waste \t\t Status" << endl;
 	for (int i = 0; i < proc_size; i++) {
-		cout << jobs[i].jid << "\t\t\t" << jobs[i].pid << "\t\t    " << 0 << "\t\t   " << jobs[i].status << endl;
+		num = jobs[i].pid;
+		if(num < 0){
+			diff = 0;
+		}else{
+			diff = partition[num - 1].size - jobs[i].size;
+		}
+		cout << jobs[i].jid << "\t\t\t" << jobs[i].pid << "\t\t  " << diff << "\t\t  " << jobs[i].status << endl;
 	}
+	cout << endl;
 }
 
 
 int main() {
-// start of main, should ask for number of partitions and jobs then ask for the size
 	Process lists[10];
-	Partition process[10];
+	Partition partitions[10];
 	int part_size;
 	int proc_size;
+
 	Partition tempP;
 	cout << "Number of partitions: ";
 	cin >> part_size;
-	const int temp = part_size;
 	for (int i = 0; i < part_size; i++) {
 		cout << "Size:";
 		cin >> tempP.size;
 		tempP.pid = i + 1;
-		process[i] = tempP;
+		partitions[i] = tempP;
 	}
 	
 	Process tempJ;
@@ -62,7 +70,10 @@ int main() {
 		lists[i] = tempJ;
 
 	}
-	nextFit(process, lists, part_size, proc_size);
+	bestFit(partitions, lists, part_size, proc_size);
+	firstFit(partitions, lists, part_size, proc_size);
+	worstFit(partitions, lists, part_size, proc_size);
+	nextFit(partitions, lists, part_size, proc_size);
 	return 0;
 }
 
@@ -70,24 +81,30 @@ int main() {
 
 // Inserts job into a partition that is equal(recommended) if not greater in size 
 int bestFit(Partition partition[], Process jobs[], int part_size, int proc_size) {
-	int best_index = 0;
+	int best_index;
 	for (int i = 0; i < proc_size; i++) {
+		best_index = -1;
 		for (int j = 0; j < part_size; j++) {
 			if (jobs[i].size == partition[j].size && partition[j].isUsed == false) {
-				cout << jobs[i].jid << " : " << partition[j].pid << " : " << partition[j].isUsed << endl;
 				jobs[i].status = "running";
 				jobs[i].pid = partition[j].pid;
 				partition[j].isUsed = true;
+				best_index = -1;
 				break;
 			}
 			else if (jobs[i].size < partition[j].size && partition[j].isUsed == false) {
-				if (best_index == 0) {
+				if (best_index < 0) {
 					best_index = j;
 				}
 				else if (partition[best_index].size > partition[j].size) {
 					best_index = j;
 				}
 			}
+		}
+		if(best_index > -1){
+			jobs[i].status = "running";
+			jobs[i].pid = partition[best_index].pid;
+			partition[best_index].isUsed = true;
 		}
 	}
 	printAlg("BestFIt", partition, jobs, proc_size);
@@ -99,7 +116,6 @@ int firstFit(Partition partition[], Process jobs[], int part_size, int proc_size
 	for (int i = 0; i < proc_size; i++) {
 		for (int j = 0; j < part_size; j++) {
 			if (jobs[i].size <= partition[j].size && partition[j].isUsed == false) {
-				cout << jobs[i].jid << " : " << partition[j].pid << " : " << partition[j].isUsed << endl;
 				jobs[i].status = "running";
 				jobs[i].pid = partition[j].pid;
 				partition[j].isUsed = true;
@@ -121,7 +137,6 @@ int nextFit(Partition partition[], Process jobs[], int part_size, int proc_size)
 				position = 0;
 			}
 			if (jobs[i].size <= partition[j].size && partition[j].isUsed == false) {
-				cout << jobs[i].jid << " : " << partition[j].pid << " : " << partition[j].isUsed << endl;
 				jobs[i].status = "running";
 				jobs[i].pid = partition[j].pid;
 				partition[j].isUsed = true;
@@ -130,11 +145,34 @@ int nextFit(Partition partition[], Process jobs[], int part_size, int proc_size)
 			}
 		}
 	}
-	printAlg("NextFIt", partition, jobs, proc_size);
+	printAlg("NextFit", partition, jobs, proc_size);
 	return 0;
 }
 
 // Inserts job into the biggest partition
-int worstFit() {
+int worstFit(Partition partition[], Process jobs[], int part_size, int proc_size) {
+	int worst_index;
+	for (int i = 0; i < proc_size; i++) {
+		worst_index = -1;
+		for (int j = 0; j < part_size; j++) {
+			if(!partition[j].isUsed){
+				if(jobs[i].size <= partition[j].size){
+					if(worst_index < 0){
+						worst_index = j;
+					}
+					else if(partition[j].size > partition[worst_index].size){
+						worst_index = j;
+					}
+				}
+			}
+		}
+		if(worst_index > -1){
+			jobs[i].status = "running";
+			jobs[i].pid = partition[worst_index].pid;
+			partition[worst_index].isUsed = true;
+		}
+		
+	}
+	printAlg("WorstFIt", partition, jobs, proc_size);
 	return 0;
 }
