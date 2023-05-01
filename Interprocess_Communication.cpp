@@ -8,7 +8,6 @@ using namespace std;
 
 int main() {
     int fd1[2], fd2[2];
-    pid_t pid;
     int N = 6;
     int partial_sum = 0;
 
@@ -17,7 +16,7 @@ int main() {
         return 1;
     }
 
-    pid = fork();
+    pid_t pid = fork();
 
     if (pid == -1) {
         cerr << "Failed to fork." << endl;
@@ -25,7 +24,6 @@ int main() {
     } else if (pid == 0) {
         // Child process
 
-        // Close unused pipe ends
         close(fd1[1]);
         close(fd2[0]);
 
@@ -45,7 +43,6 @@ int main() {
     } else {
         // Parent process
 
-        // Close unused pipe ends
         close(fd1[0]);
         close(fd2[1]);
 
@@ -54,7 +51,6 @@ int main() {
             write(fd1[1], &i, sizeof(i));
         }
 
-        // Close write end of input pipe
         close(fd1[1]);
 
         int child_sum;
